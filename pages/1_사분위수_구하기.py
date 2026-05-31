@@ -33,13 +33,13 @@ text_input = st.text_area(
     "데이터 입력",
     value="10, 20, 30, 40, 50",
     placeholder="예: 10, 20, 30 또는 10 20 30 또는 10\n20\n30",
-    help="입력한 데이터로 사분위수를 계산합니다."
+    help="입력한 데이터로 사분위수를 계산합니다. 소수점도 그대로 계산하며 출력은 최대 소수점 셋째 자리까지 표시합니다."
 )
 
 numbers = []
 for token in text_input.replace(",", " ").split():
     try:
-        value = int(token)
+        value = float(token)
         if 1 <= value <= 1000:
             numbers.append(value)
         else:
@@ -48,20 +48,31 @@ for token in text_input.replace(",", " ").split():
         if token.strip():
             st.warning(f"올바른 숫자가 아닙니다: {token}")
 
+
+def format_value(value):
+    if isinstance(value, int) or (isinstance(value, float) and value.is_integer()):
+        return str(int(value))
+    text = f"{value:.3f}"
+    return text.rstrip("0").rstrip(".")
+
+
+def format_list(values):
+    return [format_value(v) for v in values]
+
 if numbers:
     st.header("3. 사분위수 계산 과정")
     st.write("입력한 숫자를 오름차순으로 정렬한 뒤 사분위수를 단계별로 계산합니다.")
 
     정렬된 = sorted(numbers)
-    st.write(f"정렬된 데이터: {정렬된}")
+    st.write(f"정렬된 데이터: {format_list(정렬된)}")
 
     n = len(정렬된)
     st.write(f"데이터 개수: {n}")
 
     m = 정렬된[0]
     M = 정렬된[-1]
-    st.write(f"- 최솟값 m: {m}")
-    st.write(f"- 최댓값 M: {M}")
+    st.write(f"- 최솟값 m: {format_value(m)}")
+    st.write(f"- 최댓값 M: {format_value(M)}")
 
     def 중앙값(자료):
         길이 = len(자료)
@@ -71,32 +82,41 @@ if numbers:
         return (자료[중간 - 1] + 자료[중간]) / 2
 
     if n % 2 == 1:
+        middle_index = (n - 1) // 2
         st.write("데이터 개수가 홀수이므로 중앙값 Q2는 가운데 값입니다.")
-        st.write(f"Q2 위치: {(n + 1) // 2}번째 값")
-        st.write(f"Q2 계산: {정렬된[(n - 1) // 2]} = {정렬된[(n - 1) // 2]}")
+        st.write(f"Q2 위치: {middle_index + 1}번째 값")
+        st.write(f"Q2 계산: {format_value(정렬된[middle_index])} = {format_value(정렬된[middle_index])}")
     else:
-        st.write("데이터 개수가 짝수이므로 중앙값 Q2는 가운데 두 값의 평균입니다.")
         left_index = n // 2 - 1
         right_index = n // 2
-        st.write(f"Q2 계산: ({정렬된[left_index]} + {정렬된[right_index]}) / 2")
-        st.write(f"Q2 값: {(정렬된[left_index] + 정렬된[right_index]) / 2}")
+        st.write("데이터 개수가 짝수이므로 중앙값 Q2는 가운데 두 값의 평균입니다.")
+        st.write(
+            f"Q2 계산: ({format_value(정렬된[left_index])} + {format_value(정렬된[right_index])}) / 2"
+        )
+        st.write(
+            f"Q2 값: {format_value((정렬된[left_index] + 정렬된[right_index]) / 2)}"
+        )
 
     q2 = 중앙값(정렬된)
     lower_half = 정렬된[: n // 2]
     upper_half = 정렬된[(n + 1) // 2 :]
 
-    st.write(f"하위 절반 데이터: {lower_half}")
-    st.write(f"상위 절반 데이터: {upper_half}")
+    st.write(f"하위 절반 데이터: {format_list(lower_half)}")
+    st.write(f"상위 절반 데이터: {format_list(upper_half)}")
 
     st.write("### Q1 계산 과정")
     if len(lower_half) % 2 == 1:
         mid = len(lower_half) // 2
         st.write(f"Q1 위치: {mid + 1}번째 값")
-        st.write(f"Q1 값: {lower_half[mid]}")
+        st.write(f"Q1 값: {format_value(lower_half[mid])}")
     else:
         mid = len(lower_half) // 2
-        st.write(f"Q1 계산: ({lower_half[mid - 1]} + {lower_half[mid]}) / 2")
-        st.write(f"Q1 값: {(lower_half[mid - 1] + lower_half[mid]) / 2}")
+        st.write(
+            f"Q1 계산: ({format_value(lower_half[mid - 1])} + {format_value(lower_half[mid])}) / 2"
+        )
+        st.write(
+            f"Q1 값: {format_value((lower_half[mid - 1] + lower_half[mid]) / 2)}"
+        )
 
     q1 = 중앙값(lower_half)
 
@@ -104,18 +124,22 @@ if numbers:
     if len(upper_half) % 2 == 1:
         mid = len(upper_half) // 2
         st.write(f"Q3 위치: {mid + 1}번째 값")
-        st.write(f"Q3 값: {upper_half[mid]}")
+        st.write(f"Q3 값: {format_value(upper_half[mid])}")
     else:
         mid = len(upper_half) // 2
-        st.write(f"Q3 계산: ({upper_half[mid - 1]} + {upper_half[mid]}) / 2")
-        st.write(f"Q3 값: {(upper_half[mid - 1] + upper_half[mid]) / 2}")
+        st.write(
+            f"Q3 계산: ({format_value(upper_half[mid - 1])} + {format_value(upper_half[mid])}) / 2"
+        )
+        st.write(
+            f"Q3 값: {format_value((upper_half[mid - 1] + upper_half[mid]) / 2)}"
+        )
 
     q3 = 중앙값(upper_half)
 
     st.write("### 최종 사분위수 결과")
-    st.write(f"- 제1사분위수 Q1: {q1}")
-    st.write(f"- 제2사분위수 Q2 (중앙값): {q2}")
-    st.write(f"- 제3사분위수 Q3: {q3}")
+    st.write(f"- 제1사분위수 Q1: {format_value(q1)}")
+    st.write(f"- 제2사분위수 Q2 (중앙값): {format_value(q2)}")
+    st.write(f"- 제3사분위수 Q3: {format_value(q3)}")
 
     st.markdown("---")
     st.write("### 계산 과정 요약")
