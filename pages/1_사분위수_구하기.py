@@ -1,4 +1,5 @@
 import streamlit as st
+from decimal import Decimal, InvalidOperation
 
 st.set_page_config(page_title="사분위수 구하기", page_icon="📊", layout="centered")
 
@@ -39,21 +40,24 @@ text_input = st.text_area(
 numbers = []
 for token in text_input.replace(",", " ").split():
     try:
-        value = float(token)
-        if 1 <= value <= 1000:
+        value = Decimal(token)
+        if Decimal("1") <= value <= Decimal("1000"):
             numbers.append(value)
         else:
-            st.warning(f"범위를 벗어난 숫자: {value} (1~1000 사이만 허용)")
-    except ValueError:
+            st.warning(f"범위를 벗어난 숫자: {token} (1~1000 사이만 허용)")
+    except (InvalidOperation, ValueError):
         if token.strip():
             st.warning(f"올바른 숫자가 아닙니다: {token}")
 
 
 def format_value(value):
-    if isinstance(value, int) or (isinstance(value, float) and value.is_integer()):
-        return str(int(value))
-    text = f"{value:.3f}"
-    return text.rstrip("0").rstrip(".")
+    if isinstance(value, Decimal):
+        if value == value.to_integral():
+            return str(value.quantize(Decimal(1)))
+        return format(value.normalize(), 'f')
+    if isinstance(value, int):
+        return str(value)
+    return str(value)
 
 
 def format_list(values):
@@ -79,7 +83,7 @@ if numbers:
         중간 = 길이 // 2
         if 길이 % 2 == 1:
             return 자료[중간]
-        return (자료[중간 - 1] + 자료[중간]) / 2
+        return (자료[중간 - 1] + 자료[중간]) / Decimal("2")
 
     if n % 2 == 1:
         middle_index = (n - 1) // 2
@@ -94,7 +98,7 @@ if numbers:
             f"Q2 계산: ({format_value(정렬된[left_index])} + {format_value(정렬된[right_index])}) / 2"
         )
         st.write(
-            f"Q2 값: {format_value((정렬된[left_index] + 정렬된[right_index]) / 2)}"
+            f"Q2 값: {format_value((정렬된[left_index] + 정렬된[right_index]) / Decimal('2'))}"
         )
 
     q2 = 중앙값(정렬된)
@@ -131,7 +135,7 @@ if numbers:
             f"Q3 계산: ({format_value(upper_half[mid - 1])} + {format_value(upper_half[mid])}) / 2"
         )
         st.write(
-            f"Q3 값: {format_value((upper_half[mid - 1] + upper_half[mid]) / 2)}"
+            f"Q3 값: {format_value((upper_half[mid - 1] + upper_half[mid]) / Decimal('2'))}"
         )
 
     q3 = 중앙값(upper_half)
